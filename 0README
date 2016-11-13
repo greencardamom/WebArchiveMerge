@@ -1,0 +1,79 @@
+Web Archive Merge
+_________________
+
+Bot purpose: merge {{wayback}} and {{webcite}} into {{webarchive}} on Wikipedia (English)
+
+The MIT License (MIT)
+
+Copyright (c) 2016 by User:Green Cardamom (at en.wikipedia.org)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE."""
+
+==Install==
+
+  The following programs are used:
+
+    GNU Awk 4.1+
+    GNU Parallel
+    Wget
+    Lua 5.2+      (used in base62.lua)
+    Python 2.7.x  (mostly needed for Pywikibot)
+    Pywikibot     (https://www.mediawiki.org/wiki/Manual:Pywikibot)
+
+A. Download all files from GitHub into a directory (any name)
+B. Run 'sh setup' to create sym links, set permissions and create temp directories.
+C. Set the #!/usr/bin/awk at the top of the .awk files 
+   Same with Lua in base62.lua and Python in savepage.py
+D. Setup Pywikibot. This is the framework for logging in and sending changes to Wikipedia.
+
+   a. Run the Pywikibot setup script if not already done during install.
+   b. Copy savepage.py to where Pywikibot is located (same directory as user-config.py)
+      Set executable (chmod 755 savepage.py)
+   c. Set the path of Pywikibot (same as step b.) for Exe["pywikibotsavepage"] in init.awk
+   d. Add a 'setenv PYWIKIBOT2_DIR <path>' pointing to the same path as step b. Add to your .login or .bashrc script
+   e. Edit ~pywikibot/pywikibot/page.py
+      Find the line: pywikibot.output(u"Page %s saved" % link)
+      Right below it (same indent level) add the line: print "OKMEDIC"
+   f. Edit ~pywikibot/pywikibot/throttle.py
+      Find the line: message = (u"Sleeping for %(seconds).1f seconds
+      Right above it add the line: sleep = 1
+
+E. Set paths to programs and directories in init.awk
+
+==Initialize==
+
+A. Make a list of articles that use the template. Use today's date in YMD format ending with .auth and place in ~/meta sub-directory
+
+    ./backlinks -e "Template:Wayback" > meta/wayback20161102.auth
+    ./backlinks -e "Template:WebCite" > meta/webcite20161102.auth
+
+   This step only needs to be done once.
+
+==Running==
+
+A. Run wam
+
+1. Create a new project files specifying the size of the batch (in this case 50, from 1-50)
+
+    ./project -c -p wayback20161102.00001-00050
+
+2. Run wam with GNU parallel
+
+    parallel -a meta/wayback20161102.00001-00050/auth -r --delay 2 --trim lr -k -j 2 ./driver -d y -p wayback20161102.00001-00050 -n {} 
+

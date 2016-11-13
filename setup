@@ -1,0 +1,15 @@
+chmod 750 backlinks.awk
+ln -s backlinks.awk  backlinks
+chmod 750 driver.awk
+ln -s driver.awk  driver
+chmod 750 project.awk
+ln -s project.awk  project
+chmod 750 push2wiki.awk
+ln -s push2wiki.awk  push2wiki
+chmod 750 wam.awk
+ln -s wam.awk wam
+chmod 750 api
+chmod 750 savepage.py
+chmod 750 base62.lua
+mkdir meta
+mkdir data
