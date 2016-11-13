@@ -16,7 +16,7 @@ The core functionality is wam.awk which processes a single article.
 
 driver.awk "drives" (executes) wam, which in turn is executed by GNU Parallel in batches
 
-project.awk is a tool for creating and managing batches of articles for processing by wam
+project.awk is a tool for creating and managing batches of articles for processing by driver
 
 Install and operate
 ==================

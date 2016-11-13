@@ -32,8 +32,9 @@ THE SOFTWARE."""
     GNU Awk 4.1+
     GNU Parallel
     Wget
-    Lua 5.2+      (used in base62.lua)
-    Python 2.7.x  (mostly needed for Pywikibot)
+    Lua 5.2+      (for base62.lua)
+    Python 3.4+   (for urldecoding functions)
+    Python 2.7+   (mostly for Pywikibot)
     Pywikibot     (https://www.mediawiki.org/wiki/Manual:Pywikibot)
 
 A. Download all files from GitHub into a directory (any name)
@@ -54,7 +55,9 @@ D. Setup Pywikibot. This is the framework for logging in and sending changes to 
       Find the line: message = (u"Sleeping for %(seconds).1f seconds
       Right above it add the line: sleep = 1
 
-E. Set paths to programs and directories in init.awk
+E. In init.awk, set paths to programs and directories 
+F. In project.cfg, set the paths to the meta and data directories for default.data and default.meta
+   The rest of this file can be left as-is.
 
 ==Initialize==
 

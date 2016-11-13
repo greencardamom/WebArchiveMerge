@@ -32,17 +32,12 @@ BEGIN {
   Exe["sleep"] = "/bin/sleep"
   Exe["wget"] = "/usr/bin/wget"
   Exe["mkdir"] = "/bin/mkdir"
-  Exe["python3"] = "/usr/bin/python3"    # Python needed for urlencode/decode 
-  Exe["python"] = "/usr/bin/python"
+  Exe["python"] = "/usr/bin/python"       # needed for url en/de-coding
+  Exe["python3"] = "/usr/bin/python3"     # needed for url en/de-coding
 
-  # If you have installed wdiff (for color inline diffs)
-  Exe["coldiff"] = Home "coldiff"
-
-  Exe["bug"] = Home "bug.awk"
   Exe["wam"] = Home "wam"
 
   Exe["pywikibotsavepage"] = "/home/adminuser/pywikibot/core_stable/savepage.py"
-
   # Add this to your .login or .bashrc script
   #  setenv PYWIKIBOT2_DIR /home/adminuser/pywikibot/core_stable/
  
