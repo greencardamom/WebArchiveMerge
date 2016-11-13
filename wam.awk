@@ -1,6 +1,6 @@
 #!/usr/local/bin/gawk -E     
 
-#
+
 # The MIT License (MIT)
 #    
 # Copyright (c) 2016 by User:Green Cardamom (at en.wikipedia.org)
@@ -62,7 +62,7 @@ function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,se
 
   gsub(/{{[=]}}/,"aAkK",article)  # remove special positional parameter {{=}} so patsplit can find the end of template
 
-  c = patsplit(article, field, /{[ ]?{[ ]?[Ww]ay[Bb]ack[^}]*}[ ]?}|{[ ]?{[ ]?[Ww]ay[Bb]ack[Dd]ate[^}]*}[ ]?}|{[ ]?{[ ]?[Ww]eb[Aa]rchiv[^}]*}[ ]?}|{[ ]?{[ ]?[Ww]eb[Cc]ite[^}]*}[ ]?}|{[ ]?{[ ]?[Ww]eb[Cc]itation[^}]*}[ ]?}/, sep)
+  c = patsplit(article, field, /{[ ]?{[ ]?[Ww]ay[Bb]ack[^}]*}[ ]?}|{[ ]?{[ ]?[Ww]ay[Bb]ack[Dd]ate[^}]*}[ ]?}|{[ ]?{[ ]?[Ww]eb[Aa]rchiv[ ]?[|][^}]*}[ ]?}|{[ ]?{[ ]?[Ww]eb[Cc]ite[^}]*}[ ]?}|{[ ]?{[ ]?[Ww]eb[Cc]itation[^}]*}[ ]?}/, sep)
 
   while(i++ < c ){
     s = split(field[i], a, "|")
@@ -143,6 +143,10 @@ function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,se
       }
       else if(arg == "name") {
         gsub(/^[ ]{0,}[Nn]ame[ ]{0,}[=]/,"",argfield)
+        hold["title"] = striparg(argfield)      
+      }
+      else if(arg == "tutle") {
+        gsub(/^[ ]{0,}[Tt]utle[ ]{0,}[=]/,"",argfield)
         hold["title"] = striparg(argfield)      
       }
       else if(arg == "title") {
@@ -318,6 +322,7 @@ function getnamedarg(str) {
   if(str ~ /^[ ]{0,}[Dd]ate[ ]{0,}[=]/) return "date"
   if(str ~ /^[ ]{0,}[Uu][Rr][Ll][ ]{0,}[=]/) return "url"
   if(str ~ /^[ ]{0,}[Dd]ateformat[ ]{0,}[=]/) return "dateformat"
+  if(str ~ /^[ ]{0,}[Tt]utle[ ]{0,}[=]/) return "tutle"
   if(str ~ /^[ ]{0,}[Tt]itle[ ]{0,}[=]/) return "title"
   if(str ~ /^[ ]{0,}[Nn]ame[ ]{0,}[=]/) return "name"
   if(str ~ /^[ ]{0,}[Tt]ext[ ]{0,}[=]/) return "text"
@@ -330,6 +335,8 @@ function getnamedarg(str) {
   if(str ~ /^[ ]{0,}[Aa]rchive[-]?url[ ]{0,}[=]/) return "unknown"
   if(str ~ /^[ ]{0,}[Aa]rchive[-]?date[ ]{0,}[=]/) return "unknown"
   if(str ~ /^[ ]{0,}[Pp]ublisher[ ]{0,}[=]/) return "unknown"
+  if(str ~ /^[ ]{0,}[Aa]uthor[ ]{0,}[=]/) return "unknown"
+  if(str ~ /^[ ]{0,}[Ll]anguage[ ]{0,}[=]/) return "unknown"
 
   if(str ~ /^[ ]{0,}[0-9]{0,}[=]/) return "posnumber"
 
