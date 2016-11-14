@@ -453,11 +453,11 @@ function deleteproject(pid,mid,did,    i,c,re,a) {
 #
 # Search for string "re" in <filename> across entire project 
 #
-function check_string(filename, pid, did, mid,    re,c,files,stampdir,i,command,count) {
+function check_string(filename, pid, did, mid,    re,c,files,stampdir,i,command,count,wikiname) {
 
  # Be careful with escaping as unsure how grep responds 
   # re = "http[:]//jobs[.]suntimes[.]com/news/metro/kelly/940633[,]kellytimeline[.]stng"
-  re = "{{[ ]?[=][ ]?}}"
+  re = "{{[ ]?[Ww]ayback[^d]*df[ ]?[=][ ]?yes"
 
   files = sys2var(Exe["ls"] " " did pid "/")
 
@@ -471,14 +471,14 @@ function check_string(filename, pid, did, mid,    re,c,files,stampdir,i,command,
   c = split(files, stampdir, "\n")
   while(i++ < c) {
     if(checkexists(did pid "/" stampdir[i] "/" filename)) {
-      command = Exe["grep"] " -ciE \"" re "\" " did pid "/" stampdir[i] "/" filename
+
+      command = Exe["grep"] " -iE \"[{][{][ ]?[Ww]ayback[^}]+}\" " did pid "/" stampdir[i] "/" filename "| awk '{if($0 ~ /df[ ]?[=][ ]?[Yy][Ee][Ss]/) i++}END{print i}'"
+#      command = Exe["grep"] " -ciE \"" re "\" " did pid "/" stampdir[i] "/" filename
       count = sys2var(command)
       if(count > 0) {
-         print did pid "/" stampdir[i] "/" filename
-#        newid = whatisindexname(did pid "/" stampdir[i], mid pid "/index")
-#        if(newid !~ /^0$/)
-#          print newid
-#        print newid " ( cd " did pid "/" stampdir[i] " )"
+        wikiname = readfile(did pid "/" stampdir[i] "/namewiki.txt" )
+        print strip(wikiname)
+#        print did pid "/" stampdir[i] "/" filename
       }
     }
   }

@@ -2,6 +2,8 @@ WebArchiveMerge bot
 ===================
 WebArchiveMerge is a Wikipedia bot to merge multiple templates into a single template.
 
+Example edit: https://en.wikipedia.org/w/index.php?title=Chadstone_High_School&diff=prev&oldid=749418640
+
 Bot info page: https://en.wikipedia.org/wiki/User:Green_Cardamom/Webarchive_template_merge
 
 by User:Green Cardamom (en.wikipedia.org)

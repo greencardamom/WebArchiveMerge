@@ -204,11 +204,11 @@ function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,se
         if(length(fullnumber) == 4) hold["webarchivedate"] = yeardigit
         else if(length(fullnumber) == 6) hold["webarchivedate"] = monthname " " yeardigit 
         else if(length(fullnumber) > 7) {
-          if(hold["df"] == "y" || hold["df"] == "dmy") 
+          if(hold["df"] ~ /[Yy][Ee]?[Ss]?/ || hold["df"] ~ /[Dd][Mm][Yy]/ ) 
             hold["webarchivedate"] = daydigit " " monthname " " yeardigit        # dmy
-          else if(hold["df"] == "n" || hold["df"] == "mdy")
+          else if(hold["df"] ~ /[Nn][Oo]?/ || hold["df"] ~ /[Mm][Dd][Yy]/ )
             hold["webarchivedate"] = monthname " " daydigit ", " yeardigit       # mdy
-          else if(hold["df"] == "iso")
+          else if(hold["df"] ~ /[Ii][Ss][Oo]/ )
             hold["webarchivedate"] = yeardigit "-" monthdigitz "-" daydigitz     # iso
           else
             hold["webarchivedate"] = monthname " " daydigit ", " yeardigit       # mdy (default)
