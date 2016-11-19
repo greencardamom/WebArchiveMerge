@@ -130,12 +130,12 @@ BEGIN {
     result = sys2var(command)
 
     if(result ~ /OKMEDIC/) { # Success
-      prnt("push2wiki.awk: Status successful (savepage.py). Page uploaded to Wikipedia. " name)
+      prnt("driver.awk: Status successful (savepage.py). Page uploaded to Wikipedia. " name)
       print namewiki >> Project["discovereddone"]
       close(Project["discovereddone"])
     }
     else {
-      prnt("push2wiki.awk: Error uploading to Wikipedia (savepag.py). " name)
+      prnt("driver.awk: Error uploading to Wikipedia (savepag.py). " name)
       print namewiki >> Project["discoverederror"]
       close(Project["discoverederror"])
     }
@@ -155,15 +155,16 @@ function stopbutton(button,bb) {
   if(button ~ /[Aa]ction[ ]{0,}[=][ ]{0,}[Rr][Uu][Nn]/) 
     return "RUN"
 
-  prnt("push2wiki.awk: ABORTED by stop button page. " name)
-  while(bb++ < 4)  {                                            # Ring my bell...
+  prnt("driver.awk: ABORTED by stop button page. " name)
+  while(bb++ < 5)  {                                            # Ring my bell...
     system("/home/adminuser/scripts/bell")
     sleep(2)
     system("/home/adminuser/scripts/bell")
     sleep(4)
   }
-  sleep(240)
+  sleep(864000)      # sleep up to 24 days .. no other way to stop GNU parallel from running
   return "STOP"
+
 }
 
 # 
@@ -171,9 +172,9 @@ function stopbutton(button,bb) {
 # 
 function prnt(msg) {
   if( length(msg) > 0 ) {
-    print msg
-    print(strftime("%Y%m%d %H:%M:%S") " " msg) >> Home "push2wiki.log"
-    close(Home "push2wiki.log")
+    print msg >> "/dev/stderr"
+    print(strftime("%Y%m%d %H:%M:%S") " " msg) >> Home "driver.log"
+    close(Home "driver.log")
   }
 }
 

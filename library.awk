@@ -776,6 +776,29 @@ function uriparseElement(str, element,   safe,command,scheme) {
   return sys2var(command)
 }
 
+# 
+# URL-encode limited set of characters needed for Wikipedia templates                
+#    https://en.wikipedia.org/wiki/Template:Cite_web#URL
+#
+function urlencodelimited(url,  safe) {
+
+  safe = url
+  gsub(/[ ]/, "%20", safe)
+  gsub(/["]/, "%22", safe)
+  gsub(/[']/, "%27", safe)
+  gsub(/[<]/, "%3C", safe)  
+  gsub(/[>]/, "%3E", safe)        
+  gsub(/[[]/, "%5B", safe)       
+  gsub(/[]]/, "%5D", safe)         
+  gsub(/[{]/, "%7B", safe)
+  gsub(/[}]/, "%7D", safe)
+  gsub(/[|]/, "%7C", safe)
+  return safe
+
+}
+
+
+
 #
 # Convert XML to plain
 #

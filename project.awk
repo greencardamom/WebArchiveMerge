@@ -457,7 +457,8 @@ function check_string(filename, pid, did, mid,    re,c,files,stampdir,i,command,
 
  # Be careful with escaping as unsure how grep responds 
   # re = "http[:]//jobs[.]suntimes[.]com/news/metro/kelly/940633[,]kellytimeline[.]stng"
-  re = "{{[ ]?[Ww]ayback[^d]*df[ ]?[=][ ]?yes"
+  # re = "{{[ ]?[Ww]ayback[^d]*df[ ]?[=][ ]?yes"
+  # re = "[{]{0,}[{][ ]{0,}[Uu]se[ ][Dd][Mm][Yy][ ]?[Dd]?a?t?e?s?|[{]{0,}[{][ ]{0,}[Dd][Mm][Yy]|[{]{0,}[{][ ]{0,}[Uu][Ss][Ee][Dd][Mm][Yy]"
 
   files = sys2var(Exe["ls"] " " did pid "/")
 
@@ -472,8 +473,9 @@ function check_string(filename, pid, did, mid,    re,c,files,stampdir,i,command,
   while(i++ < c) {
     if(checkexists(did pid "/" stampdir[i] "/" filename)) {
 
-      command = Exe["grep"] " -iE \"[{][{][ ]?[Ww]ayback[^}]+}\" " did pid "/" stampdir[i] "/" filename "| awk '{if($0 ~ /df[ ]?[=][ ]?[Yy][Ee][Ss]/) i++}END{print i}'"
+#      command = Exe["grep"] " -iE \"[{][{][ ]?[Ww]ayback[^}]+}\" " did pid "/" stampdir[i] "/" filename "| awk '{if($0 ~ /df[ ]?[=][ ]?[Yy][Ee][Ss]/) i++}END{print i}'"
 #      command = Exe["grep"] " -ciE \"" re "\" " did pid "/" stampdir[i] "/" filename
+      command = "/home/adminuser/wam/findtlxdate -f " did pid "/" stampdir[i] "/" filename
       count = sys2var(command)
       if(count > 0) {
         wikiname = readfile(did pid "/" stampdir[i] "/namewiki.txt" )

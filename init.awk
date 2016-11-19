@@ -36,6 +36,7 @@ BEGIN {
   Exe["python3"] = "/usr/bin/python3"     # needed for url en/de-coding
 
   Exe["wam"] = Home "wam"
+  Exe["base62"] = Home "base62.lua"
 
   Exe["pywikibotsavepage"] = "/home/adminuser/pywikibot/core_stable/savepage.py"
   # Add this to your .login or .bashrc script

@@ -88,6 +88,7 @@ function backlinks(entity	,url, method, jsonin, jsonout, continuecode, b, c, i, 
         c = split(jsonout, b, "\n")
         jsonout = ""
         while (i++ < c) {
+            gsub(/\\["]/,"\"",b[i])
             if(b[i] ~ "for API usage") # intermittent bug; MediaWiki returns "See https://en.wikipedia.org/w/api.php for API usage" instead of backlinks
                 continue
             if(x[b[i]] == "")

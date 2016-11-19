@@ -1,6 +1,5 @@
 #!/usr/local/bin/gawk -E     
 
-
 # The MIT License (MIT)
 #    
 # Copyright (c) 2016 by User:Green Cardamom (at en.wikipedia.org)
@@ -55,22 +54,34 @@ BEGIN {
 
 }
 
-function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,sep3,command,api) {
+function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,sep3,command,api,datetype) {
 
   checkexists(articlename, "wam.awk main()", "exit")
   article = readfile(articlename)
+  datetype = setdatetype(article)  # check for {{dmy}} or {{mdy}} in article
 
-  gsub(/{{[=]}}/,"aAkK",article)  # remove special positional parameter {{=}} so patsplit can find the end of template
+  c = patsplit(article, field, /{[ ]?{[ ]?[Dd]ate[^}]*}[ ]?}/,sep)      # Convert {{date|1 May 2005}} -> ZzPp5|1 May 2005ZzPp6
+  while(i++ < c) {
+    gsub(/^{[ ]?{[ ]?Date[ ]{1,}[|]/,"ZzPp2",field[i])
+    gsub(/^{[ ]?{[ ]?Date[|]/,"ZzPp3",field[i])
+    gsub(/^{[ ]?{[ ]?date[ ]{1,}[|]/,"ZzPp4",field[i])
+    gsub(/^{[ ]?{[ ]?date[|]/,"ZzPp5",field[i])
+    gsub(/}[ ]?}$/,"ZzPp6",field[i])
+  }
+  if(c > 0) article = unpatsplit(field, sep)
+  i = c = 0
+
+  gsub(/{{[=]}}/,"aAkK",article)   # remove magic {{=}} so patsplit can find the end of template
+  gsub(/{{[!]}}/,"aAjJ",article)   # remove magic {{!}} (renders as "|" in templates)
 
   c = patsplit(article, field, /{[ ]?{[ ]?[Ww]ay[Bb]ack[^}]*}[ ]?}|{[ ]?{[ ]?[Ww]ay[Bb]ack[Dd]ate[^}]*}[ ]?}|{[ ]?{[ ]?[Ww]eb[Aa]rchiv[ ]?[|][^}]*}[ ]?}|{[ ]?{[ ]?[Ww]eb[Cc]ite[^}]*}[ ]?}|{[ ]?{[ ]?[Ww]eb[Cc]itation[^}]*}[ ]?}/, sep)
 
-  while(i++ < c ){
+  while(i++ < c ) {
     s = split(field[i], a, "|")
     if(s < 2) continue
     j = 0
     delete hold
 
-# print "_____________________________"
     while(j++ < s) {
 
                                                                  # Parse old templates into hold[] array
@@ -82,7 +93,6 @@ function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,se
         continue  
       }        
       arg = getnamedarg(striparg(argfield))
-# print "arg = " arg
       if(arg == 0) {                                             # positional parameter
         if(j == 2) {
           hold["url"] = striparg(argfield)
@@ -149,6 +159,10 @@ function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,se
         gsub(/^[ ]{0,}[Tt]utle[ ]{0,}[=]/,"",argfield)
         hold["title"] = striparg(argfield)      
       }
+      else if(arg == "tile") {
+        gsub(/^[ ]{0,}[Tt]ile[ ]{0,}[=]/,"",argfield)
+        hold["title"] = striparg(argfield)      
+      }
       else if(arg == "title") {
         gsub(/^[ ]{0,}[Tt]itle[ ]{0,}[=]/,"",argfield)
         hold["title"] = striparg(argfield)      
@@ -165,8 +179,36 @@ function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,se
         gsub(/^[ ]{0,}[Nn]olink[ ]{0,}[=]/,"",argfield)
         hold["nolink"] = striparg(argfield)      
       }
+      else if(arg == "quote") {
+        gsub(/^[ ]{0,}[Qq]uote[ ]{0,}[=]/,"",argfield)
+        hold["quote"] = striparg(argfield)      
+      }
     }
 
+    if(hold["date"] ~ /ZzPp2|ZzPp3|ZzPp4|ZzPp5|ZzPp6/) {          # Try to untangle embedded {{date}} subarguments
+      gsub(/ZzPp2|ZzPp3|ZzPp4|ZzPp5|ZzPp6/,"",hold["date"])
+      if(hold["date"] ~ /mdy|MDY/) {
+        hold["date"] = ""
+        hold["dateformat"] = "mdy"
+      }
+      else if(hold["date"] ~ /dmy|DMY/) {
+        hold["date"] = ""
+        hold["dateformat"] = "dmy"
+      }
+      else if(hold["date"] ~ /iso|ISO/) {
+        hold["date"] = ""
+        hold["dateformat"] = "iso"
+      }
+      else if(hold["date"] ~ /ymd|YMD/) {
+        hold["date"] = ""
+        hold["dateformat"] = "ymd"
+      }
+      else if(hold["date"] ~ /none/) {
+        hold["date"] = ""
+      }
+      else if(hold["date"] ~ /[|]/)
+        hold["date"] = ""
+    }
 
                                                                  # Build new webarchive template
 
@@ -204,7 +246,7 @@ function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,se
         if(length(fullnumber) == 4) hold["webarchivedate"] = yeardigit
         else if(length(fullnumber) == 6) hold["webarchivedate"] = monthname " " yeardigit 
         else if(length(fullnumber) > 7) {
-          if(hold["df"] ~ /[Yy][Ee]?[Ss]?/ || hold["df"] ~ /[Dd][Mm][Yy]/ ) 
+          if(hold["df"] ~ /[Yy][Ee]?[Ss]?/ || hold["df"] ~ /[Dd][Mm][Yy]/ || (datetype == "dmy" && hold["df"] == "" ) ) 
             hold["webarchivedate"] = daydigit " " monthname " " yeardigit        # dmy
           else if(hold["df"] ~ /[Nn][Oo]?/ || hold["df"] ~ /[Mm][Dd][Yy]/ )
             hold["webarchivedate"] = monthname " " daydigit ", " yeardigit       # mdy
@@ -220,34 +262,38 @@ function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,se
 
       hold["webarchiveurl"] = webciteurl(hold["url"])
 
-      if(hold["dateformat"] !~ /mdy|dmy|iso|ymd/) 
-        hold["dateformat"] = "dmy"
+      if(hold["dateformat"] !~ /[Mm][Dd][Yy]|[Dd][Mm][Yy]|[Ii][Ss][Oo]|[Yy][Mm][Dd]/) 
+        hold["dateformat"] = datetype
 
       pc = split(uriparseElement(hold["url"],"path"),pa,"/")
       if(pc > 1) {
-        hold["webciteid"] = strip(pa[2])
-        command = Exe["base62"] " \"" hold["webciteid"] "\""
-        rawdate = sys2var(command)
-        if(rawdate == "error") {
+        if(pa[2] ~ /query/)
           hold["webarchivedate"] = hold["date"]
-        }
         else {
-          pc = split(rawdate,pa,"|")
-          if(pc == 4) {
-            if(hold["dateformat"] ~ /[Mm][Dd][Yy]/) 
-              hold["webarchivedate"] = strip(pa[1])
-            else if(hold["dateformat"] ~ /[Dd][Mm][Yy]/) 
-              hold["webarchivedate"] = strip(pa[2])
-            else if(hold["dateformat"] ~ /[Ii][Ss][Oo]/) 
-              hold["webarchivedate"] = strip(pa[3])
-            else if(hold["dateformat"] ~ /[Yy][Mm][Dd]/) 
-              hold["webarchivedate"] = strip(pa[4])
+          hold["webciteid"] = strip(pa[2])
+          command = Exe["base62"] " \"" hold["webciteid"] "\""
+          rawdate = sys2var(command)
+          if(rawdate == "error") {
+            hold["webarchivedate"] = hold["date"]
+          }
+          else {
+            pc = split(rawdate,pa,"|")
+            if(pc == 4) {
+              if(hold["dateformat"] ~ /[Mm][Dd][Yy]/) 
+                hold["webarchivedate"] = strip(pa[1])
+              else if(hold["dateformat"] ~ /[Dd][Mm][Yy]/) 
+                hold["webarchivedate"] = strip(pa[2])
+              else if(hold["dateformat"] ~ /[Ii][Ss][Oo]/) 
+                hold["webarchivedate"] = strip(pa[3])
+              else if(hold["dateformat"] ~ /[Yy][Mm][Dd]/) 
+                hold["webarchivedate"] = strip(pa[4])
+              else {
+                hold["webarchivedate"] = hold["date"]
+              }
+            }
             else {
               hold["webarchivedate"] = hold["date"]
             }
-          }
-          else {
-            hold["webarchivedate"] = hold["date"]
           }
         }
       }
@@ -265,7 +311,9 @@ function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,se
       sand = sand " |title=" hold["webarchivetitle"]
     if(length(hold["webarchivenolink"]) > 0) 
       sand = sand " |nolink="
-    sand = sand " }}"
+    sand = sand " }}" 
+    if(length(hold["quote"]) > 0)
+      sand = sand " Quote: " hold["quote"]
 
     field[i] = sand
   }
@@ -274,7 +322,13 @@ function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,se
 
   if(article != articlenew && length(articlenew) > 10 && c > 0) {
    
-    gsub(/aAkK/, "{{=}}", articlenew)  # restore special positional parameter {{=}} 
+    gsub(/aAjJ/, "{{!}}", articlenew)  # restore {{!}} 
+    gsub(/aAkK/, "{{=}}", articlenew)  # restore {{=}} 
+    gsub(/ZzPp6/, "}}", articlenew)    # restore {{date..}} 
+    gsub(/ZzPp2/, "{{Date |", articlenew)     
+    gsub(/ZzPp3/, "{{Date|", articlenew)     
+    gsub(/ZzPp4/, "{{date |", articlenew)     
+    gsub(/ZzPp5/, "{{date|", articlenew)     
 
     articlenewname = editsummaryname = articlename
 
@@ -324,10 +378,12 @@ function getnamedarg(str) {
   if(str ~ /^[ ]{0,}[Dd]ateformat[ ]{0,}[=]/) return "dateformat"
   if(str ~ /^[ ]{0,}[Tt]utle[ ]{0,}[=]/) return "tutle"
   if(str ~ /^[ ]{0,}[Tt]itle[ ]{0,}[=]/) return "title"
+  if(str ~ /^[ ]{0,}[Tt]ile[ ]{0,}[=]/) return "tile"
   if(str ~ /^[ ]{0,}[Nn]ame[ ]{0,}[=]/) return "name"
   if(str ~ /^[ ]{0,}[Tt]ext[ ]{0,}[=]/) return "text"
   if(str ~ /^[ ]{0,}[Ww]ayback[ ]{0,}[=]/) return "wayback"
   if(str ~ /^[ ]{0,}[Nn]olink[ ]{0,}[=]/) return "nolink"
+  if(str ~ /^[ ]{0,}[Qq]uote[ ]{0,}[=]/) return "quote"
 
   if(str ~ /^[ ]{0,}[Bb][Oo][Tt][ ]{0,}[=]/) return "bot"
   if(str ~ /^[ ]{0,}[Aa]ccess[-]?date[ ]{0,}[=]/) return "unknown"
@@ -337,6 +393,7 @@ function getnamedarg(str) {
   if(str ~ /^[ ]{0,}[Pp]ublisher[ ]{0,}[=]/) return "unknown"
   if(str ~ /^[ ]{0,}[Aa]uthor[ ]{0,}[=]/) return "unknown"
   if(str ~ /^[ ]{0,}[Ll]anguage[ ]{0,}[=]/) return "unknown"
+  if(str ~ /^[ ]{0,}[Ww]ork[ ]{0,}[=]/) return "unknown"
 
   if(str ~ /^[ ]{0,}[0-9]{0,}[=]/) return "posnumber"
 
@@ -440,4 +497,14 @@ function webciteurl(url,  pa,pc,id) {
       }
 
       return url
+}
+
+#
+# Determine date type - set global Datetype = dmy or mdy
+#   default mdy
+#    
+function setdatetype(article) {
+  if(article ~ /[{]{0,}[{][ ]{0,}[Uu]se[ ][Dd][Mm][Yy][ ]?[Dd]?a?t?e?s?|[{]{0,}[{][ ]{0,}[Dd][Mm][Yy]|[{]{0,}[{][ ]{0,}[Uu][Ss][Ee][Dd][Mm][Yy]/)
+    return "dmy"
+  return "mdy"
 }
