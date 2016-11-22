@@ -1,5 +1,5 @@
-chmod 750 backlinks.awk
-ln -s backlinks.awk  backlinks
+chmod 750 wikiget.awk
+ln -s wikiget.awk  wikiget
 chmod 750 driver.awk
 ln -s driver.awk  driver
 chmod 750 project.awk
