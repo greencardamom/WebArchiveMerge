@@ -63,8 +63,8 @@ F. In project.cfg, set the paths to the meta and data directories for default.da
 
 A. Make a list of articles that use the template. Use today's date in YMD format ending with .auth and place in ~/meta sub-directory
 
-    ./wikiget -b "Template:Wayback" > meta/wayback20161102.auth
-    ./wikiget -b "Template:WebCite" > meta/webcite20161102.auth
+    ./wikiget -t t -b "Template:Wayback" > meta/wayback20161102.auth
+    ./wikiget -t t -b "Template:WebCite" > meta/webcite20161102.auth
 
    This step only needs to be done once.
 

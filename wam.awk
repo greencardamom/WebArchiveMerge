@@ -129,10 +129,10 @@ function main(article,c,i,s,a,j,pa,pc,pan,pp,hold,arg,argfield,field,sep,sep2,se
         hold["url"] = strip(pa[1])
                                                                   # Fix bugs created by IABot
 
-        if(hold["service"] == "webcite" && hold["url"] ~ /https[:]\/\/web[.]http[:]\/\/www[.]webcitation/)           
+        if(hold["service"] == "webcite" && hold["url"] ~ /https[:]\/\/web[.]http[:]\/\/w?w?w?[.]?webcitation/)           
           gsub(/^https[:]\/\/web[.]/,"",hold["url"])
-        if(hold["service"] == "wayback" && hold["url"] ~ /http[:]\/\/www[.]webcitation[.]org\/query[?]url[=]http/) 
-          gsub(/^http[:]\/\/www[.]webcitation[.]org\/query[?]url[=]/,"",hold["url"])
+        if(hold["service"] == "wayback" && hold["url"] ~ /http[:]\/\/w?w?w?[.]?webcitation[.]org\/query[?]url[=]http/) 
+          gsub(/^http[:]\/\/w?w?w?[.]?webcitation[.]org\/query[?]url[=]/,"",hold["url"])
 
       }
       else if(arg == "wayback") {

@@ -50,29 +50,21 @@ BEGIN {
     exit
   }
 
+# library.awk .. load Project[] paths via project.cfg
+  setProject(pid)    
 
-  setProject(pid)     # library.awk .. load Project[] paths via project.cfg
-
-  nano = substr(sys2var( Exe["date"] " +\"%N\""), 1, 4)
+# Create temp directory
+  nano = substr(sys2var( Exe["date"] " +\"%N\""), 1, 6)
   wm_temp = Project["data"] "wm-" sys2var( Exe["date"] " +\"%m%d%H%M%S\"") nano "/" 
   if(!mkdir(wm_temp)) {
     print "driver.awk: unable to create temp file" > "/dev/stderr"
     exit
   }
 
-  # print wm_temp
-
 # Save wikisource
   print getwikisource(namewiki, "dontfollow") > wm_temp "article.txt"
   close(wm_temp "article.txt")
   stripfile(wm_temp "article.txt", "inplace")
-
-# Save wikisource (from old run)
-  #oldindex = "/home/adminuser/cbdb/meta/" pid "/index"
-#  oldindex = "/home/adminuser/wm/meta/" pid "/index"
-#  oldid = whatistempid(namewiki, oldindex)
-#  command = "cp " oldid "article.txt " wm_temp "article.txt"
-#  sys2var(command)
 
   command = "cp " wm_temp "article.txt " wm_temp "article.txt.2"
   sys2var(command)
@@ -86,23 +78,11 @@ BEGIN {
   print namewiki "|" wm_temp >> Project["indextemp"]
   close(Project["indextemp"])
 
-#  if(!sendtoindex(Project["index"], namewiki, wm_temp)) {
-#    print "driver.awk: ERROR with " name ". Unable to update index file." > "/dev/stderr"
-#    print "driver.awk: ERROR with " name ". Unable to update index file." >> Project["critical"]
-#    close(Project["critical"])
-#    exit
-#  }
-
-
 # Run wam and save result to /wm_temp/article.new.txt
 
   print "\n"namewiki"\n" > "/dev/stderr"
-  safe = namewiki
-  gsub(/["]/,"\\\"",safe)
-  gsub(/'/, "'\"'\"'", safe)     # make safe for shell
-  gsub(/’/, "'\"’\"'", safe)
 
-  command = Exe["wam"] " -p \"" Project["id"] "\" -n '" safe "' -s \"" wm_temp "\"article.txt"  
+  command = Exe["wam"] " -p \"" Project["id"] "\" -n " shquote(namewiki) " -s \"" wm_temp "\"article.txt"  
   changes = sys2var(command)
   if(changes) {
     print "    Found " changes " change(s) for " namewiki > "/dev/stderr"
@@ -122,10 +102,7 @@ BEGIN {
     if(length(summary) < 5)
       summary = "Archive template(s) merged to [[template:webarchive]] ([[User:Green_Cardamom/Webarchive_template_merge|WAM]])"
 
-    safe = namewiki
-    gsub(/["]/,"\\\"",safe)  # Special character shell escape
-    gsub(/[$]/,"\\$",safe)
-    command = Exe["pywikibotsavepage"] " \"" safe "\" \"" summary "\" \"" article "\""
+    command = Exe["pywikibotsavepage"] " " shquote(namewiki) " \"" summary "\" \"" article "\""
 
     result = sys2var(command)
 

@@ -127,7 +127,8 @@ function sys2var(command        ,fish, scale, ship) {
 function http2var(url) {
 
      if(url ~ /'/) gsub(/'/,"%27",url)  # Escape shell literal string
-     return sys2var( Exe["wget"] Wget_opts "-q -O- '" url "'")
+     return sys2var( Exe["wget"] Wget_opts "-q -O- '" url "'" )
+
 }
 
 
@@ -166,7 +167,7 @@ function join2(arr, sep         ,i,lobster) {
 #
 # Strip leading/trailing whitespace
 #
-function strip(str, opt) {
+function strip(str) {
        return gensub(/^[[:space:]]+|[[:space:]]+$/,"","g",str)
 }
 
@@ -188,25 +189,66 @@ function clean(str) {
 }
 
 #
+# Make string safe for shell
+#  print shquote("Hello' There")    produces 'Hello'\'' There'
+#  echo 'Hello'\'' There'           produces Hello' There
+#
+function shquote(str,  safe) {
+        safe = str
+        gsub(/'/, "'\\''", safe)
+        gsub(/’/, "'\\’'", safe)
+        return "'" safe "'"
+}
+
+
+#
+# Escape regex symbols 
+#   eg: print regesc3("&^$(){}[].*+?|\\=:") produces &[\\^][$][(][)][{][}]\[\][.][*][+][?][|]\\[=][:]
+#   Consider instead using the non-regex literal string replacetext() in library.awk
+#   Credit: https://github.com/cheusov/runawk/blob/master/modules/str2regexp.awk
+#   Regesc2 is the prefered of 2 or 3, unless passing to a CL utility that can't handle \ escapes
+#   last update: November 2016
+#
+function regesc3 (str,   safe) {
+  safe = str
+  gsub(/\[/, "---open-sq-bracket---", safe)
+  gsub(/\]/, "---close-sq-bracket---", safe)
+
+  gsub(/[?{}|()*+.$=:]/, "[&]", safe)
+  gsub(/\^/, "[\\^]", safe)
+
+  if (safe ~ /\\/)
+    gsub(/\\/, "\\\\", safe)
+
+  gsub(/---open-sq-bracket---/, "\\[", safe)
+  gsub(/---close-sq-bracket---/, "\\]", safe)
+
+  return safe
+}
+
+#
 # Escape regex symbols
-#  Caution: causes trouble with regex and [g]sub() with "&"
+#  eg. print regesc2("&^$(){}[].*+?|\\=:") produces \&\^\$\(\)\{\}\[\]\.\*\+\?\|\\\=\:
 #  Consider instead using the non-regex literal string replacetext() in library.awk
+#  Caution: causes trouble with regex and [g]sub() with "&" (is that still true? seems to work)
+#  Regesc2 is the prefered of 2 or 3, unless passing to a CL utility that can't handle \ escapes
+#  last update: November 2016
 #
 function regesc2(str,   safe) {
   safe = str
-  gsub(/[][^$".*?+{}\\()|]/, "\\\\&", safe)
+  gsub(/[][^$=:".*?+{}\\()|]/, "\\\\&", safe)
   gsub(/&/,"\\\\\\&",safe)
   return safe
 }
 #
 # Escape regex symbols
-#  See caution above. Regesc2 is the prefered of these two, unless passing to a CL utility that can't handle \ escapes
+# This is broken and kept for backward compatibility. Use regesc2 or 3.
 #
 function regesc(str,   safe) {
   safe = str
   gsub(/[][^$".*?+{}\\()|]/, "[&]", safe)
-  gsub("[\\^]","\\^",safe)
-  #gsub(/&/,"\\\\\\\\&",safe) # Eight! Test this ..
+  gsub("[\\^]","\\\\^",safe)
+#  gsub(/&/,"\\\\\\\\&",safe) # Eight! Test this ..
   return safe
 }
 
@@ -435,7 +477,7 @@ function sleep(seconds) {
 #  Otherwise find a different method to seed srand.
 #
 function randomnumber(max) {
-  srand(systime())
+  srand(systime() + PROCINFO["pid"])
   return int( rand() * max)
 }
 
@@ -446,12 +488,14 @@ function randomnumber(max) {
 function isanumber(str,    safe,i) {
 
   if(length(str) == 0) return 0
-  safe = str
+  safe = str 
+  if(safe == "") return 0
+  if(safe == "0") return 1
   while( i++ < length(safe) ) {
-    if( substr(safe,i,1) !~ /[0-9]/ )          
+    if( substr(safe,i,1) !~ /[0-9]/ )
       return 0
   }
-  return 1   
+  return 1
 
 }          
 
@@ -685,6 +729,7 @@ function mktemp(template, type,
 
 #
 # Make a directory ("mkdir -p dir")
+#  requires: @load "filefuncs"
 #
 function mkdir(dir,    ret, var, cwd) {
   sys2var(Exe["mkdir"] " -p \"" dir "\" 2>/dev/null")
@@ -716,13 +761,11 @@ function mkdir(dir,    ret, var, cwd) {
 #                 http://www.programcreek.com/python/example/53325/urllib.parse.urlsplit
 #                 https://pymotw.com/2/urlparse/
 #
-function uriparseEncodeurl(str,   safe,command) {
+#  Last update: Nov 2016
+#
+function uriparseEncodeurl(str,   command) {
 
-  safe = str
-  gsub(/'/, "'\"'\"'", safe)     # make safe for shell
-  gsub(/’/, "'\"’\"'", safe)
-
-  command = Exe["python3"] " -c \"from urllib.parse import urlunsplit, urlsplit, quote; import sys; o = urlsplit(sys.argv[1]); print(urlunsplit((o.scheme, o.netloc, quote(o.path), quote(o.query), o.fragment)))\" '" safe "'"
+  command = Exe["python3"] " -c \"from urllib.parse import urlunsplit, urlsplit, quote; import sys; o = urlsplit(sys.argv[1]); print(urlunsplit((o.scheme, o.netloc, quote(o.path), quote(o.query), o.fragment)))\" " shquote(str)
   return sys2var(command)
 }
 
@@ -731,28 +774,23 @@ function uriparseEncodeurl(str,   safe,command) {
 # url-encode via Python (slow)
 #  Credit: https://askubuntu.com/questions/53770/how-can-i-encode-and-decode-percent-encoded-strings-on-the-command-line
 #     See for other options          
+#  Last update: Nov 2016
 #   
-function urlencodepython(str,   command, safe) {
-
-   safe = str
-   gsub(/'/, "'\"'\"'", safe)     # make safe for shell
-   gsub(/’/, "'\"’\"'", safe)
+function urlencodepython(str,   command) {
 
    # python -c "import urllib, sys; print urllib.quote(sys.argv[1])" "Emil Młynarski"
-   command = Exe["python"] " -c \"import urllib, sys; print urllib.quote(sys.argv[1])\" '" safe "'"
+   command = Exe["python"] " -c \"import urllib, sys; print urllib.quote(sys.argv[1])\" " shquote(str)
    return strip(sys2var(command))
 }                      
 
 #
 # url-decode via Python 
 #
-function urldecodepython(str,   command,safe) {
+#  Last update: Nov 2016
+#
+function urldecodepython(str,   command) {
 
-   safe = str
-   gsub(/'/, "'\"'\"'", safe)    
-   gsub(/’/, "'\"’\"'", safe)
-
-   command = Exe["python3"] " -c \"from urllib.parse import unquote; import sys; print(unquote(sys.argv[1]))\" '" safe "'"
+   command = Exe["python3"] " -c \"from urllib.parse import unquote; import sys; print(unquote(sys.argv[1]))\" " shquote(str)
    return strip(sys2var(command))
 }
 
@@ -768,11 +806,11 @@ function urldecodepython(str,   command,safe) {
 #
 #  Example: uriElement("https://www.cwi.nl:80/nl?", "path") returns "/nl"
 #
-function uriparseElement(str, element,   safe,command,scheme) {
-  safe = str               
-  gsub(/'/, "'\"'\"'", safe)
-  gsub(/’/, "'\"’\"'", safe)              
-  command = Exe["python3"] " -c \"from urllib.parse import urlsplit; import sys; o = urlsplit(sys.argv[1]); print(o." element ")\" '" safe "'"
+#  Last update: Nov 2016
+#
+function uriparseElement(str, element,   command) {
+
+  command = Exe["python3"] " -c \"from urllib.parse import urlsplit; import sys; o = urlsplit(sys.argv[1]); print(o." element ")\" " shquote(str)
   return sys2var(command)
 }
 
@@ -794,10 +832,7 @@ function urlencodelimited(url,  safe) {
   gsub(/[}]/, "%7D", safe)
   gsub(/[|]/, "%7C", safe)
   return safe
-
 }
-
-
 
 #
 # Convert XML to plain
